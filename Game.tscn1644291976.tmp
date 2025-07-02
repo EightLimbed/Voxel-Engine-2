@@ -1,0 +1,19 @@
+[gd_scene load_steps=5 format=3 uid="uid://q03lyu2uvbir"]
+
+[ext_resource type="Shader" uid="uid://byase4da52bsd" path="res://VoxelRaymarcher.gdshader" id="1_wbfu4"]
+[ext_resource type="Script" uid="uid://drw6gvb36fm3l" path="res://CameraMovement.gd" id="2_xkndl"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_wbfu4"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_u44n3"]
+render_priority = 0
+shader = ExtResource("1_wbfu4")
+
+[node name="Game" type="Node3D"]
+
+[node name="Chunk" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_wbfu4")
+surface_material_override/0 = SubResource("ShaderMaterial_u44n3")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+script = ExtResource("2_xkndl")
