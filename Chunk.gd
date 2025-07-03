@@ -1,6 +1,9 @@
 @tool
 extends MeshInstance3D
 
+var noise = FastNoiseLite
+var random = RandomNumberGenerator
+
 @export var generate = true:
 	set(input):
 		generate_chunk()
@@ -8,8 +11,21 @@ extends MeshInstance3D
 const chunk_size : int = 32
 
 func generate_chunk():
-	var noise = FastNoiseLite.new()
-	noise.frequency = 0.1
-	var chunk = ImageTexture3D.new()
-	chunk = noise.get_image_3d(chunk_size, chunk_size, chunk_size, false, true)
+	noise = FastNoiseLite.new()
+	random = RandomNumberGenerator.new()
+	noise.seed = random.randi()
+	var chunk : PackedInt32Array = []
+	chunk.resize(32*32*32)
+	for x in chunk_size:
+		for y in chunk_size:
+			for z in chunk_size:
+				chunk[z + 32 * (y + 32 * x)] = get_block(x,y,z)
 	set_instance_shader_parameter("chunk", chunk)
+	print(chunk[1000])
+	print(get_instance_shader_parameter("chunk")[1000])
+
+func get_block(x : float,y : float ,z : float):
+	if noise.get_noise_3d(x,y,z) > 0:
+		return 1
+	else:
+		return 0
