@@ -1,20 +1,15 @@
 @tool
 extends MeshInstance3D
-@export var generate : bool = true
-var noise = FastNoiseLite
+
+@export var generate = true:
+	set(input):
+		generate_chunk()
+
+const chunk_size : int = 32
 
 func generate_chunk():
-	var texture = NoiseTexture3D
-	
-	set_instance_shader_parameter("c", chunk_data)
-
-func _process(delta: float) -> void:
-	if generate:
-		generate_chunk()
-		generate = false
-
-func get_block_noise(pos: Vector3) -> int:
-	var hills = noise.get_noise_3d(pos.x, pos.y, pos.z)
-	if hills > 0.1:
-		return 1.0
-	return 0.0
+	var noise = FastNoiseLite.new()
+	noise.frequency = 0.1
+	var chunk = ImageTexture3D.new()
+	chunk = noise.get_image_3d(chunk_size, chunk_size, chunk_size, false, true)
+	set_instance_shader_parameter("chunk", chunk)
