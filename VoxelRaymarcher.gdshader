@@ -7,13 +7,15 @@ const float max_steps = 100.0;
 varying vec3 world_camera;
 varying vec3 world_position;
 
-uniform isampler3D chunk;
+uniform sampler3D chunk;
 
-//returns distance from edge of cube hit to center of cube.
-float GetDist(vec3 p, vec3 cr){
+//returns distance from edge of cube hit (p) to center of cube (pc), and type of cube (pc).
+vec2 GetVoxel(vec3 p, vec3 cr){
 	//might get rounding errors, as when looking back, 1.0s might get subtracted to 0.5s, and round back up.
-	float d = length(max(abs(p-sign(cr)*vec3(0.5)+round(p+sign(cr)*vec3(0.5))/2.0)-1.0/32.0, 0)); 
-	return d;
+	vec3 pc = round(p+sign(cr)*vec3(0.5));
+	float d = length(max(abs(p+sign(cr)*vec3(0.5)-pc)-1.0/32.0, 0)); 
+	float type = length(texture(chunk, pc));
+	return vec2(d, type);
 }
 
 void vertex() {
@@ -22,12 +24,16 @@ void vertex() {
 }
 
 //finish DDA
+//returns point distance from voxel (if one exists), and what type it is.
 vec2 raymarch(vec3 cp, vec3 cr) {
 	vec3 dda = abs(cp-max_steps*cr);
 	for (int i = 0; i < int(max_steps); i++) {
-		float d = 0.0
-		float type = 0.0
-		return vec2(d);
+		float d = 0.0;
+		float type = 0.0;
+		if (GetVoxel(p,cr) is ) {
+			return vec2(d, type);
+		}
+	break;
 	}
 }
 
