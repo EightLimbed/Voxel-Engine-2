@@ -18,5 +18,5 @@ flip_faces = true
 [node name="Player" parent="." instance=ExtResource("2_xkndl")]
 
 [node name="Chunk" parent="." instance=ExtResource("2_u44n3")]
-transform = Transform3D(0.999999, 0.00168529, 0.000251375, -0.00168533, 0.999999, 0.000148615, -0.000251119, -0.000149046, 1, -0.284474, -0.372647, -0.191431)
+transform = Transform3D(0.999999, 0.00168529, 0.000251375, -0.00168533, 0.999999, 0.000148615, -0.000251119, -0.000149046, 1, -0.282802, -0.398479, -0.187327)
 mesh = SubResource("BoxMesh_t88pq")
