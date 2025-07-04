@@ -25,7 +25,8 @@ func generate_chunk():
 	print(get_instance_shader_parameter("chunk")[1000])
 
 func get_block(x : float,y : float ,z : float):
+	return 1
 	if noise.get_noise_3d(x,y,z) > 0:
-		return 1
-	else:
 		return 0
+	else:
+		return 1
