@@ -1,7 +1,7 @@
 extends CharacterBody3D
 
-const SPEED = 3.0
-const JUMP_VELOCITY = 3.0
+const SPEED = 1.0
+const JUMP_VELOCITY = 1.0
 var gravity: int = 18
 @onready var neck := $Neck
 @onready var camera := $Neck/Camera

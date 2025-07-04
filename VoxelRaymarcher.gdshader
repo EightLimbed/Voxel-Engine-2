@@ -9,58 +9,62 @@ const int MAX_STEPS = 128;
 varying vec3 world_camera;
 varying vec3 world_position;
 
-uniform sampler3D chunk;
+uniform sampler3D chunk; // 3D voxel data stored as R8
 
-// Convert world position to voxel grid coords
+// Convert world space [-0.5, 0.5] to texture space [0,1]
+vec3 world_to_texcoord(vec3 p) {
+	return (p+0.5);
+}
+
+// Convert world space to voxel grid coordinate
 ivec3 to_voxel(vec3 p) {
-	return ivec3(floor((p + 0.5) * float(CHUNK_SIZE)));
+	vec3 t = (p + 0.5) * float(CHUNK_SIZE);
+	return ivec3(floor(t));
 }
 
-// Get 1D array index from voxel coords
-int get_index(ivec3 coord) {
+bool is_voxel_solid(ivec3 coord) {
 	if (any(lessThan(coord, ivec3(0))) || any(greaterThanEqual(coord, ivec3(CHUNK_SIZE))))
-		return -1;
-	return coord.x + coord.y * CHUNK_SIZE + coord.z * CHUNK_SIZE * CHUNK_SIZE;
+		return false;
+
+	vec3 uvw = (vec3(coord) + vec3(0.5)) / float(CHUNK_SIZE); // center of voxel texel
+	float value = texture(chunk, uvw).r; // red channel only (R8)
+	return value >= 0.9;
 }
 
-// Digital Differential Analyzer voxel ray traversal
 float RayMarch(vec3 ro, vec3 rd, out vec3 hit_pos, out ivec3 hit_voxel) {
+	rd = normalize(rd);
 	vec3 p = ro;
 	ivec3 voxel = to_voxel(p);
 
 	vec3 step = sign(rd);
-	vec3 tDelta = abs(vec3(1.0) / rd) * VOXEL_SIZE;
-	vec3 voxel_boundary = (vec3(voxel) / float(CHUNK_SIZE)) - 0.5;
-	voxel_boundary += step * VOXEL_SIZE;
-	vec3 tMax = abs((voxel_boundary - p) / rd);
+	vec3 inv_rd = 1.0 / rd;
+	vec3 tDelta = abs(inv_rd) * VOXEL_SIZE;
+
+	vec3 voxel_boundary = (vec3(voxel) + step * 0.5) * VOXEL_SIZE - 0.5;
+	vec3 tMax = (voxel_boundary - ro) * inv_rd;
+
+	float t = 0.0;
 
 	for (int i = 0; i < MAX_STEPS; i++) {
-		int index = get_index(voxel);
-		if (index >= 0 && chunk[index] != 0) {
-			hit_pos = p;
+		if (is_voxel_solid(voxel)) {
+			hit_pos = ro + rd * t;
 			hit_voxel = voxel;
-			return length(p - ro);
+			return t;
 		}
 
-		// Step to next voxel
-		if (tMax.x < tMax.y) {
-			if (tMax.x < tMax.z) {
-				tMax.x += tDelta.x;
-				voxel.x += int(step.x);
-			} else {
-				tMax.z += tDelta.z;
-				voxel.z += int(step.z);
-			}
+		if (tMax.x < tMax.y && tMax.x < tMax.z) {
+			voxel.x += int(step.x);
+			t = tMax.x;
+			tMax.x += tDelta.x;
+		} else if (tMax.y < tMax.z) {
+			voxel.y += int(step.y);
+			t = tMax.y;
+			tMax.y += tDelta.y;
 		} else {
-			if (tMax.y < tMax.z) {
-				tMax.y += tDelta.y;
-				voxel.y += int(step.y);
-			} else {
-				tMax.z += tDelta.z;
-				voxel.z += int(step.z);
-			}
+			voxel.z += int(step.z);
+			t = tMax.z;
+			tMax.z += tDelta.z;
 		}
-		p = ro + min(tMax.x, min(tMax.y, tMax.z)) * rd;
 	}
 
 	return MAX_DIST;
@@ -74,7 +78,7 @@ void vertex() {
 void fragment() {
 	vec3 ro = world_camera;
 	vec3 rd = normalize(world_position - ro);
-
+	ro += rd * 1e-4;
 	vec3 hit_pos;
 	ivec3 hit_voxel;
 	float dist = RayMarch(ro, rd, hit_pos, hit_voxel);
@@ -82,8 +86,7 @@ void fragment() {
 	if (dist >= MAX_DIST) {
 		discard;
 	} else {
-		// Simple lighting / fake normal
-		vec3 col = vec3(hit_voxel) / float(CHUNK_SIZE); // unique color per voxel position
-		ALBEDO = col;
+		// Simple color based on voxel position
+		ALBEDO = vec3(hit_voxel) / float(CHUNK_SIZE);
 	}
 }
