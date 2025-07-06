@@ -1,7 +1,7 @@
 extends CharacterBody3D
 
-const SPEED = 1.0
-const JUMP_VELOCITY = 1.0
+const SPEED = 10.0
+const JUMP_VELOCITY = 10.0
 var gravity: int = 18
 @onready var neck := $Neck
 @onready var camera := $Neck/Camera
@@ -21,18 +21,20 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	#movement
+	if Input.is_action_just_pressed("ui_copy"):
+		get_parent().get_node("Chunk").generate_chunk()
 	if Input.is_action_pressed("Jump"):
-		velocity.y = JUMP_VELOCITY
+		velocity.y = JUMP_VELOCITY  * delta
 	elif Input.is_action_pressed("Crouch"):
-		velocity.y = -JUMP_VELOCITY
+		velocity.y = -JUMP_VELOCITY  * delta
 	else:
 		velocity.y = 0
 	var input_dir := Input.get_vector("Left", "Right", "Forward", "Backward")
 	var direction = (neck.transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	if direction:
-		velocity.x = direction.x * SPEED
-		velocity.z = direction.z * SPEED
+		velocity.x = direction.x * SPEED * delta
+		velocity.z = direction.z * SPEED * delta
 	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED)
-		velocity.z = move_toward(velocity.z, 0, SPEED)
+		velocity.x = move_toward(velocity.x, 0, SPEED * delta)
+		velocity.z = move_toward(velocity.z, 0, SPEED * delta)
 	move_and_slide()

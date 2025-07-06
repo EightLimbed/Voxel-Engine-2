@@ -11,25 +11,35 @@ var random = RandomNumberGenerator
 
 const chunk_size : int = 32
 
+func _ready() -> void:
+	generate_chunk()
+	pass
+
 func generate_chunk():
 	noise = FastNoiseLite.new()
-	noise.frequency = 1.0
+	noise.frequency = 0.01
 	random = RandomNumberGenerator.new()
 	noise.seed = random.randi()
 	var images : Array[Image] = []
 	chunk = ImageTexture3D.new()
-	for z in chunk_size:
-		var image = Image.new()
-		image.create(chunk_size,chunk_size,chunk_size,Image.FORMAT_R8)
-		for x in chunk_size:
-			for y in chunk_size:
-				image.set_pixel(x-1,y-1,Color.RED)
+	for x in range(chunk_size):
+		var data : PackedByteArray
+		#data.resize(3*chunk_size^2)
+		for y in range(chunk_size):
+			for z in range(chunk_size):
+				data.append(get_block(x,y,z))
+				data.append(0)
+				data.append(0)
+		var image : Image = Image.create_from_data(chunk_size, chunk_size, false,Image.FORMAT_RGB8,data)
 		images.append(image)
-	chunk.create(Image.FORMAT_R8, chunk_size, chunk_size, chunk_size, false, images)
-	set_instance_shader_parameter("chunk", chunk)
+	chunk.create(Image.FORMAT_RGB8, chunk_size, chunk_size, chunk_size, false, images)
+	mesh.material.set("shader_parameter/chunk",chunk);
 
-func get_block(x : float,y : float ,z : float) -> float:
-	if noise.get_noise_3d(x,y,z) > 0.0:
-		return 1.0
+func get_block(x : int,y : int ,z : int) -> int:
+	x+=position.x*chunk_size
+	y+=position.y*chunk_size
+	z+=position.z*chunk_size
+	if noise.get_noise_2d(x,z) *64 >=y-chunk_size/2.0:
+		return 255
 	else:
-		return 0.0
+		return 0

@@ -4,12 +4,11 @@ render_mode unshaded;
 const int CHUNK_SIZE = 32;
 const float VOXEL_SIZE = 1.0 / float(CHUNK_SIZE);
 const float MAX_DIST = 100.0;
-const int MAX_STEPS = 128;
-
+const int MAX_STEPS = 256;
 varying vec3 world_camera;
 varying vec3 world_position;
 
-uniform sampler3D chunk; // 3D voxel data stored as R8
+uniform sampler3D chunk; // 3D voxel data stored as RGB8
 
 // Convert world space [-0.5, 0.5] to texture space [0,1]
 vec3 world_to_texcoord(vec3 p) {
@@ -28,7 +27,7 @@ bool is_voxel_solid(ivec3 coord) {
 
 	vec3 uvw = (vec3(coord) + vec3(0.5)) / float(CHUNK_SIZE); // center of voxel texel
 	float value = texture(chunk, uvw).r; // red channel only (R8)
-	return value >= 0.9;
+	return value == 1.0;
 }
 
 float RayMarch(vec3 ro, vec3 rd, out vec3 hit_pos, out ivec3 hit_voxel) {
@@ -40,7 +39,7 @@ float RayMarch(vec3 ro, vec3 rd, out vec3 hit_pos, out ivec3 hit_voxel) {
 	vec3 inv_rd = 1.0 / rd;
 	vec3 tDelta = abs(inv_rd) * VOXEL_SIZE;
 
-	vec3 voxel_boundary = (vec3(voxel) + step * 0.5) * VOXEL_SIZE - 0.5;
+	vec3 voxel_boundary = (vec3(voxel) + vec3(0.5) +step * 0.5) * VOXEL_SIZE - 0.5;
 	vec3 tMax = (voxel_boundary - ro) * inv_rd;
 
 	float t = 0.0;
