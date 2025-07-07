@@ -12,6 +12,9 @@ uniform sampler2D atlas;
 uniform float atlas_columns;
 uniform sampler3D chunk; // 3D voxel data stored as RGB8
 
+uniform vec3 frozen_camera;
+uniform bool freeze_view = false;
+
 // Convert world space [-0.5, 0.5] to texture space [0,1]
 vec3 world_to_texcoord(vec3 p) {
 	return (p+0.5);
@@ -83,7 +86,8 @@ void vertex() {
 }
 
 void fragment() {
-	vec3 ro = world_camera;
+	//can freeze ray origin
+	vec3 ro = freeze_view ? frozen_camera : world_camera;
 	vec3 rd = normalize(world_position - ro);
 	ro += rd * 1e-4;
 	vec3 hit_pos;

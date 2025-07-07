@@ -23,6 +23,10 @@ func _physics_process(delta: float) -> void:
 	#movement
 	if Input.is_action_just_pressed("ui_copy"):
 		get_parent().get_node("Chunk").generate_chunk()
+	if Input.is_action_just_pressed("ui_paste"):
+		#freezes ray origin
+		get_parent().get_node("Chunk").mesh.material.set("shader_parameter/frozen_camera",camera.global_transform.origin);
+		get_parent().get_node("Chunk").mesh.material.set("shader_parameter/freeze_view",true);
 	if Input.is_action_pressed("Jump"):
 		velocity.y = JUMP_VELOCITY  * delta
 	elif Input.is_action_pressed("Crouch"):
