@@ -122,7 +122,7 @@ void fragment() {
 	} else if (v.normal.x != 0.0) {
 		uv = hit_voxel_pos.zy * vec2(1.0,-1.0) + vec2(0.0,1.0);
 	} else {
-		uv = hit_voxel_pos.xy;
+		uv = hit_voxel_pos.xy * vec2(1.0,-1.0) + vec2(0.0,1.0);
 	}
 
 	// Atlas tile sampling
