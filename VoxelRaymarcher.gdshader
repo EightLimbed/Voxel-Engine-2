@@ -12,6 +12,7 @@ uniform sampler2D atlas;
 uniform float atlas_columns;
 uniform sampler3D chunk; // 3D voxel data stored as RGB8
 
+//allows freezing of shader for testing.
 uniform vec3 frozen_camera;
 uniform bool freeze_view = false;
 
@@ -38,9 +39,10 @@ int get_voxel(ivec3 coord) {
 struct voxel{
 	int type;
 	float dist;
+	vec3 normal;
 };
 
-voxel RayMarch(vec3 ro, vec3 rd, out vec3 hit_pos, out ivec3 hit_voxel) {
+voxel RayMarch(vec3 ro, vec3 rd) {
 	rd = normalize(rd);
 	vec3 p = ro;
 	ivec3 voxel_p = to_voxel(p);
@@ -53,12 +55,11 @@ voxel RayMarch(vec3 ro, vec3 rd, out vec3 hit_pos, out ivec3 hit_voxel) {
 	vec3 tMax = (voxel_boundary - ro) * inv_rd;
 	voxel v;
 	v.dist = 0.0;
+	v.normal = vec3(0.0);
 
 	for (int i = 0; i < MAX_STEPS; i++) {
 		v.type = get_voxel(voxel_p);
 		if (v.type != 0) {
-			hit_pos = ro + rd * v.dist;
-			hit_voxel = voxel_p;
 			return v;
 		}
 
@@ -66,14 +67,17 @@ voxel RayMarch(vec3 ro, vec3 rd, out vec3 hit_pos, out ivec3 hit_voxel) {
 			voxel_p.x += int(step.x);
 			v.dist = tMax.x;
 			tMax.x += tDelta.x;
+			v.normal = vec3(step.x, 0.0, 0.0);
 		} else if (tMax.y < tMax.z) {
 			voxel_p.y += int(step.y);
 			v.dist = tMax.y;
 			tMax.y += tDelta.y;
+			v.normal = vec3(0.0, step.y, 0.0);
 		} else {
 			voxel_p.z += int(step.z);
 			v.dist = tMax.z;
 			tMax.z += tDelta.z;
+			v.normal = vec3(0.0, 0.0, step.z);
 		}
 	}
 	v.dist = MAX_DIST;
@@ -85,24 +89,45 @@ void vertex() {
 	world_camera = (inverse(MODELVIEW_MATRIX) * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 }
 
+float get_face(vec3 normal) {
+	if (normal.y == 1.0) return 5.0; // top
+	if (normal.x == 1.0) return 4.0; // right
+	if (normal.x == -1.0) return 3.0; // left
+	if (normal.z == 1.0) return 2.0; // front
+	if (normal.z == -1.0) return 1.0; // back
+	if (normal.y == -1.0) return 0.0; // bottom
+	return 0.0; // fallback
+}
+
 void fragment() {
-	//can freeze ray origin
 	vec3 ro = freeze_view ? frozen_camera : world_camera;
 	vec3 rd = normalize(world_position - ro);
 	ro += rd * 1e-4;
-	vec3 hit_pos;
-	ivec3 hit_voxel;
-	voxel v = RayMarch(ro, rd, hit_pos, hit_voxel);
 
+	voxel v = RayMarch(ro, rd);
 	if (v.dist >= MAX_DIST) {
 		discard;
-	} else {
-		//finds what orientation to apply
-		// convert voxel hit position to local face UV
-		vec2 uv = fract((hit_pos.xy + 0.5) * float(CHUNK_SIZE));
-
-		// compute UV in atlas
-		vec2 tile_uv = (vec2(float(v.type)-1.0) + uv)/atlas_columns;
-		ALBEDO = texture(atlas, tile_uv).rgb;
 	}
+
+	// Local position inside voxel [0,1]
+	vec3 hit_voxel_pos = fract((ro + rd * v.dist + 0.5) * float(CHUNK_SIZE));
+
+	// Get correct face
+	float face_index = get_face(v.normal);
+
+	// Correct UV projection based on normal
+	vec2 uv;
+	if (v.normal.y != 0.0) {
+		uv = hit_voxel_pos.xz;
+	} else if (v.normal.x != 0.0) {
+		uv = hit_voxel_pos.zy * vec2(1.0,-1.0) + vec2(0.0,1.0);
+	} else {
+		uv = hit_voxel_pos.xy;
+	}
+
+	// Atlas tile sampling
+	vec2 tile_size = 1.0/vec2(atlas_columns,6.0);
+	vec2 tile_index = vec2(float(v.type-1), face_index);
+	vec2 tile_uv = (uv + tile_index)*tile_size;
+	ALBEDO = texture(atlas, tile_uv).rgb;
 }
