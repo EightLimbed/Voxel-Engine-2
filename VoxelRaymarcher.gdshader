@@ -8,6 +8,8 @@ const int MAX_STEPS = 256;
 varying vec3 world_camera;
 varying vec3 world_position;
 
+uniform sampler2D atlas;
+uniform float atlas_columns;
 uniform sampler3D chunk; // 3D voxel data stored as RGB8
 
 // Convert world space [-0.5, 0.5] to texture space [0,1]
@@ -21,52 +23,58 @@ ivec3 to_voxel(vec3 p) {
 	return ivec3(floor(t));
 }
 
-bool is_voxel_solid(ivec3 coord) {
+int get_voxel(ivec3 coord) {
 	if (any(lessThan(coord, ivec3(0))) || any(greaterThanEqual(coord, ivec3(CHUNK_SIZE))))
-		return false;
+		return 0;
 
 	vec3 uvw = (vec3(coord) + vec3(0.5)) / float(CHUNK_SIZE); // center of voxel texel
 	float value = texture(chunk, uvw).r; // red channel only (R8)
-	return value == 1.0;
+	return int(value*255.0);
 }
 
-float RayMarch(vec3 ro, vec3 rd, out vec3 hit_pos, out ivec3 hit_voxel) {
+struct voxel{
+	int type;
+	float dist;
+};
+
+voxel RayMarch(vec3 ro, vec3 rd, out vec3 hit_pos, out ivec3 hit_voxel) {
 	rd = normalize(rd);
 	vec3 p = ro;
-	ivec3 voxel = to_voxel(p);
+	ivec3 voxel_p = to_voxel(p);
 
 	vec3 step = sign(rd);
 	vec3 inv_rd = 1.0 / rd;
 	vec3 tDelta = abs(inv_rd) * VOXEL_SIZE;
 
-	vec3 voxel_boundary = (vec3(voxel) + vec3(0.5) +step * 0.5) * VOXEL_SIZE - 0.5;
+	vec3 voxel_boundary = (vec3(voxel_p) + vec3(0.5) +step * 0.5) * VOXEL_SIZE - 0.5;
 	vec3 tMax = (voxel_boundary - ro) * inv_rd;
-
-	float t = 0.0;
+	voxel v;
+	v.dist = 0.0;
 
 	for (int i = 0; i < MAX_STEPS; i++) {
-		if (is_voxel_solid(voxel)) {
-			hit_pos = ro + rd * t;
-			hit_voxel = voxel;
-			return t;
+		v.type = get_voxel(voxel_p);
+		if (v.type != 0) {
+			hit_pos = ro + rd * v.dist;
+			hit_voxel = voxel_p;
+			return v;
 		}
 
 		if (tMax.x < tMax.y && tMax.x < tMax.z) {
-			voxel.x += int(step.x);
-			t = tMax.x;
+			voxel_p.x += int(step.x);
+			v.dist = tMax.x;
 			tMax.x += tDelta.x;
 		} else if (tMax.y < tMax.z) {
-			voxel.y += int(step.y);
-			t = tMax.y;
+			voxel_p.y += int(step.y);
+			v.dist = tMax.y;
 			tMax.y += tDelta.y;
 		} else {
-			voxel.z += int(step.z);
-			t = tMax.z;
+			voxel_p.z += int(step.z);
+			v.dist = tMax.z;
 			tMax.z += tDelta.z;
 		}
 	}
-
-	return MAX_DIST;
+	v.dist = MAX_DIST;
+	return v;
 }
 
 void vertex() {
@@ -80,12 +88,17 @@ void fragment() {
 	ro += rd * 1e-4;
 	vec3 hit_pos;
 	ivec3 hit_voxel;
-	float dist = RayMarch(ro, rd, hit_pos, hit_voxel);
+	voxel v = RayMarch(ro, rd, hit_pos, hit_voxel);
 
-	if (dist >= MAX_DIST) {
+	if (v.dist >= MAX_DIST) {
 		discard;
 	} else {
-		// Simple color based on voxel position
-		ALBEDO = vec3(hit_voxel) / float(CHUNK_SIZE);
+		//finds what orientation to apply
+		// convert voxel hit position to local face UV
+		vec2 uv = fract((hit_pos.xy + 0.5) * float(CHUNK_SIZE));
+
+		// compute UV in atlas
+		vec2 tile_uv = (vec2(float(v.type)-1.0) + uv)/atlas_columns;
+		ALBEDO = texture(atlas, tile_uv).rgb;
 	}
 }

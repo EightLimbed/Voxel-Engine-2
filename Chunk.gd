@@ -39,7 +39,10 @@ func get_block(x : int,y : int ,z : int) -> int:
 	x+=position.x*chunk_size
 	y+=position.y*chunk_size
 	z+=position.z*chunk_size
-	if noise.get_noise_2d(x,z) *64 >=y-chunk_size/2.0:
-		return 255
+	var height = noise.get_noise_2d(x,z)*64+chunk_size/2.0
+	if height > y:
+		return 2
+	elif height > y-1:
+		return 1
 	else:
 		return 0
