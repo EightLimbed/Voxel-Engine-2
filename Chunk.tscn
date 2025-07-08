@@ -1,16 +1,14 @@
-[gd_scene load_steps=6 format=3 uid="uid://jk85c7mtrrt8"]
+[gd_scene load_steps=5 format=3 uid="uid://jk85c7mtrrt8"]
 
 [ext_resource type="Shader" uid="uid://ba7y2dxofmqix" path="res://VoxelRaymarcher.gdshader" id="1_lexys"]
 [ext_resource type="Texture2D" uid="uid://dwqvhmxfauspw" path="res://Atlas.png" id="2_r8y4k"]
-[ext_resource type="Script" uid="uid://216trdbpcp5a" path="res://Chunk.gd" id="2_s3wkh"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_s3wkh"]
 render_priority = 0
 shader = ExtResource("1_lexys")
 shader_parameter/atlas = ExtResource("2_r8y4k")
 shader_parameter/atlas_columns = 6.0
-shader_parameter/frozen_camera = Vector3(0, 0, 0)
-shader_parameter/freeze_view = false
+shader_parameter/block_updates = Vector3i(0, 0, 0)
 
 [sub_resource type="BoxMesh" id="BoxMesh_r8y4k"]
 material = SubResource("ShaderMaterial_s3wkh")
@@ -18,4 +16,3 @@ flip_faces = true
 
 [node name="Chunk" type="MeshInstance3D"]
 mesh = SubResource("BoxMesh_r8y4k")
-script = ExtResource("2_s3wkh")

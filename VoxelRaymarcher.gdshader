@@ -1,20 +1,19 @@
 shader_type spatial;
 render_mode unshaded;
 
-const int CHUNK_SIZE = 32;
+const int CHUNK_SIZE = 64;
 const float VOXEL_SIZE = 1.0 / float(CHUNK_SIZE);
 const float MAX_DIST = 100.0;
-const int MAX_STEPS = 256;
+const int MAX_STEPS = 512;
 varying vec3 world_camera;
 varying vec3 world_position;
 
 uniform sampler2D atlas;
 uniform float atlas_columns;
-uniform sampler2DArray chunks; // 3D voxel data stored as RGB8
-
-//allows freezing of shader for testing.
-uniform vec3 frozen_camera;
-uniform bool freeze_view = false;
+instance uniform int chunk_index;
+global uniform sampler2DArray chunks; // 3D voxel data stored as RGB8
+//global uniform sampler2D slice;
+uniform ivec3 block_updates;
 
 // Convert world space [-0.5, 0.5] to texture space [0,1]
 vec3 world_to_texcoord(vec3 p) {
@@ -31,8 +30,9 @@ int get_voxel(ivec3 coord) {
 	if (any(lessThan(coord, ivec3(0))) || any(greaterThanEqual(coord, ivec3(CHUNK_SIZE))))
 		return 0;
 
-	vec2 uv = (vec2(coord.xy) + vec2(0.5)) / float(CHUNK_SIZE); // center of voxel texel
-	float value = texture(chunks, vec3(uv.x,uv.y,float(coord.z))).r; // red channel only (R8)
+	vec2 uv = (vec2(coord.xy) + vec2(0.5)) / float(CHUNK_SIZE); // center of voxel
+	int index = coord.z + chunk_index*CHUNK_SIZE;
+	float value = texture(chunks, vec3(uv.x,uv.y,float(index))).r; // red channel only (R8)
 	return int(value*255.0);
 }
 
@@ -100,7 +100,7 @@ float get_face(vec3 normal) {
 }
 
 void fragment() {
-	vec3 ro = freeze_view ? frozen_camera : world_camera;
+	vec3 ro = world_camera;
 	vec3 rd = normalize(world_position - ro);
 	ro += rd * 1e-4;
 

@@ -21,24 +21,19 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	#movement
-	if Input.is_action_just_pressed("ui_copy"):
-		get_parent().get_node("Chunk").generate_chunk()
-	if Input.is_action_just_pressed("ui_paste"):
-		#freezes ray origin
-		get_parent().get_node("Chunk").mesh.material.set("shader_parameter/frozen_camera",camera.global_transform.origin);
-		get_parent().get_node("Chunk").mesh.material.set("shader_parameter/freeze_view",!get_parent().get_node("Chunk").mesh.material.get("shader_parameter/freeze_view"));
+	var sprint = int(Input.is_action_pressed("Sprint"))+1
 	if Input.is_action_pressed("Jump"):
-		velocity.y = JUMP_VELOCITY  * delta
+		velocity.y = JUMP_VELOCITY  * delta * sprint
 	elif Input.is_action_pressed("Crouch"):
-		velocity.y = -JUMP_VELOCITY  * delta
+		velocity.y = -JUMP_VELOCITY  * delta * sprint
 	else:
 		velocity.y = 0
 	var input_dir := Input.get_vector("Left", "Right", "Forward", "Backward")
 	var direction = (neck.transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	if direction:
-		velocity.x = direction.x * SPEED * delta
-		velocity.z = direction.z * SPEED * delta
+		velocity.x = direction.x * SPEED * delta * sprint
+		velocity.z = direction.z * SPEED * delta * sprint
 	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED * delta)
-		velocity.z = move_toward(velocity.z, 0, SPEED * delta)
+		velocity.x = move_toward(velocity.x, 0, SPEED * delta * sprint)
+		velocity.z = move_toward(velocity.z, 0, SPEED * delta * sprint)
 	move_and_slide()
