@@ -8,7 +8,7 @@ var random = RandomNumberGenerator
 var chunk_indexes : Array[Vector3] = []
 
 const chunk_size : int = 64
-const render_distance : int = 3
+const render_distance : int = 2
 
 func _ready() -> void:
 	noise = FastNoiseLite.new()
