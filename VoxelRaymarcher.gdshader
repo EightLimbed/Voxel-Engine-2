@@ -10,7 +10,7 @@ varying vec3 world_position;
 
 uniform sampler2D atlas;
 uniform float atlas_columns;
-uniform sampler3D chunk; // 3D voxel data stored as RGB8
+uniform sampler2DArray chunks; // 3D voxel data stored as RGB8
 
 //allows freezing of shader for testing.
 uniform vec3 frozen_camera;
@@ -31,8 +31,8 @@ int get_voxel(ivec3 coord) {
 	if (any(lessThan(coord, ivec3(0))) || any(greaterThanEqual(coord, ivec3(CHUNK_SIZE))))
 		return 0;
 
-	vec3 uvw = (vec3(coord) + vec3(0.5)) / float(CHUNK_SIZE); // center of voxel texel
-	float value = texture(chunk, uvw).r; // red channel only (R8)
+	vec2 uv = (vec2(coord.xy) + vec2(0.5)) / float(CHUNK_SIZE); // center of voxel texel
+	float value = texture(chunks, vec3(uv.x,uv.y,float(coord.z))).r; // red channel only (R8)
 	return int(value*255.0);
 }
 

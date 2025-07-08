@@ -3,7 +3,6 @@ extends MeshInstance3D
 
 var noise = FastNoiseLite
 var random = RandomNumberGenerator
-@export var chunk : ImageTexture3D
 
 @export var generate = true:
 	set(input):
@@ -21,7 +20,6 @@ func generate_chunk():
 	random = RandomNumberGenerator.new()
 	noise.seed = random.randi()
 	var images : Array[Image] = []
-	chunk = ImageTexture3D.new()
 	for x in range(chunk_size):
 		var data : PackedByteArray
 		#data.resize(3*chunk_size^2)
@@ -32,8 +30,9 @@ func generate_chunk():
 				data.append(0)
 		var image : Image = Image.create_from_data(chunk_size, chunk_size, false,Image.FORMAT_RGB8,data)
 		images.append(image)
-	chunk.create(Image.FORMAT_RGB8, chunk_size, chunk_size, chunk_size, false, images)
-	mesh.material.set("shader_parameter/chunk",chunk);
+	var chunk := Texture2DArray.new()
+	chunk.create_from_images(images)
+	mesh.material.set("shader_parameter/chunks",chunk);
 
 func get_block(x : int,y : int ,z : int) -> int:
 	x+=position.x*chunk_size
