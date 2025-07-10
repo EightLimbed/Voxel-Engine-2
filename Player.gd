@@ -1,41 +1,54 @@
-extends CharacterBody3D
+extends Node
 
-const SPEED = 10.0
-const JUMP_VELOCITY = 10.0
-var gravity: int = 18
-@onready var neck := $Neck
-@onready var camera := $Neck/Camera
+const SPEED = 1.0
+const JUMP_VELOCITY = 1.0
+const GRAVITY = 18.0
+
+var pitch := 0.0
+var yaw := 0.0
+var world_direction := Vector3.FORWARD
+var world_position := Vector3.ZERO
+var sensitivity := 0.002
 
 func _ready() -> void:
+	RenderingServer.global_shader_parameter_set("aspect_ratio", float(get_viewport().size.x)/float(get_viewport().size.y))
+	print(get_viewport().size.x/get_viewport().size.y)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _unhandled_input(event: InputEvent) -> void:
-	#camera
-	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		if event is InputEventMouseMotion:
-			neck.rotate_y(-event.relative.x * 0.01)
-			camera.rotate_x(-event.relative.y * 0.01)
-			camera.rotation.x = clamp(camera.rotation.x, deg_to_rad(-90), deg_to_rad(90))
+			yaw -= event.relative.x * sensitivity
+			pitch = clamp(pitch - event.relative.y * sensitivity, -PI / 2, PI / 2)
+			# Construct direction from yaw/pitch
+			world_direction = Vector3(
+				cos(pitch) * sin(yaw),
+				sin(pitch),
+				cos(pitch) * cos(yaw)
+			).normalized()
+
+			RenderingServer.global_shader_parameter_set("world_direction", world_direction)
+
 		if event.is_action_pressed("ui_cancel"):
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
-func _physics_process(delta: float) -> void:
-	#movement
-	var sprint = int(Input.is_action_pressed("Sprint"))+1
-	if Input.is_action_pressed("Jump"):
-		velocity.y = JUMP_VELOCITY  * delta * sprint
-	elif Input.is_action_pressed("Crouch"):
-		velocity.y = -JUMP_VELOCITY  * delta * sprint
-	else:
-		velocity.y = 0
+func _process(delta: float) -> void:
+	var sprint := int(Input.is_action_pressed("Sprint")) + 1
+
+	# Get right and forward vectors based on yaw (no pitch in movement)
+	var forward = Vector3(sin(yaw), 0, cos(yaw)).normalized()
+	var right = Vector3(forward.z, 0, -forward.x).normalized()
+
 	var input_dir := Input.get_vector("Left", "Right", "Forward", "Backward")
-	var direction = (neck.transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
-	if direction:
-		velocity.x = direction.x * SPEED * delta * sprint
-		velocity.z = direction.z * SPEED * delta * sprint
-	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED * delta * sprint)
-		velocity.z = move_toward(velocity.z, 0, SPEED * delta * sprint)
-	move_and_slide()
+	var move_dir := (right * input_dir.x + forward * input_dir.y).normalized()
+
+	world_position -= move_dir * SPEED * sprint * delta
+
+	if Input.is_action_pressed("Jump"):
+		world_position.y += JUMP_VELOCITY * delta * sprint
+	elif Input.is_action_pressed("Crouch"):
+		world_position.y -= JUMP_VELOCITY * delta * sprint
+
+	RenderingServer.global_shader_parameter_set("world_camera", world_position)

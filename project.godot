@@ -67,3 +67,15 @@ chunks={
 "type": "sampler2DArray",
 "value": ""
 }
+world_camera={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+world_direction={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+aspect_ratio={
+"type": "float",
+"value": 0.0
+}
