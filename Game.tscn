@@ -1,11 +1,32 @@
-[gd_scene load_steps=9 format=3 uid="uid://q03lyu2uvbir"]
+[gd_scene load_steps=11 format=3 uid="uid://q03lyu2uvbir"]
 
 [ext_resource type="Script" uid="uid://qppi8vfylqv4" path="res://ChunkHandler.gd" id="1_sb48q"]
-[ext_resource type="PackedScene" uid="uid://jk85c7mtrrt8" path="res://Chunk.tscn" id="2_u44n3"]
 [ext_resource type="Shader" uid="uid://ba7y2dxofmqix" path="res://VoxelRaymarcher.gdshader" id="4_sb48q"]
 [ext_resource type="Texture2D" uid="uid://dwqvhmxfauspw" path="res://Atlas.png" id="5_r0x5m"]
 [ext_resource type="Script" uid="uid://d1gig0anaqpgh" path="res://Player.gd" id="5_t88pq"]
 [ext_resource type="Script" uid="uid://bvux1lquxuc25" path="res://Performance.gd" id="6_r0x5m"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_s3wkh"]
+render_priority = 0
+shader = ExtResource("4_sb48q")
+shader_parameter/atlas_columns = 0.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_r8y4k"]
+material = SubResource("ShaderMaterial_s3wkh")
+flip_faces = true
+
+[sub_resource type="PackedScene" id="PackedScene_t88pq"]
+_bundled = {
+"conn_count": 0,
+"conns": PackedInt32Array(),
+"editable_instances": [],
+"names": PackedStringArray("Chunk", "MeshInstance3D", "mesh"),
+"node_count": 1,
+"node_paths": [],
+"nodes": PackedInt32Array(-1, -1, 1, 0, -1, 1, 2, 0, 0),
+"variants": [SubResource("BoxMesh_r8y4k")],
+"version": 3
+}
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_t88pq"]
 render_priority = 0
@@ -15,11 +36,11 @@ shader_parameter/atlas_columns = 6.0
 
 [sub_resource type="QuadMesh" id="QuadMesh_r0x5m"]
 material = SubResource("ShaderMaterial_t88pq")
-size = Vector2(3, 3)
+size = Vector2(3, 2)
 
 [node name="Game" type="Node3D"]
 script = ExtResource("1_sb48q")
-chunk_scene = ExtResource("2_u44n3")
+chunk_scene = SubResource("PackedScene_t88pq")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 

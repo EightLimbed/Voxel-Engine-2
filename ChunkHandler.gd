@@ -7,7 +7,7 @@ var random = RandomNumberGenerator
 # for remembery which chunks correspond to which index.
 var chunk_indexes : Array[Vector3] = []
 
-const chunk_size : int = 64
+const chunk_size : int = 128
 const render_distance : int = 2
 
 func _ready() -> void:

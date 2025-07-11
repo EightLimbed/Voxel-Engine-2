@@ -1,7 +1,7 @@
 extends Node
 
-const SPEED = 1.0
-const JUMP_VELOCITY = 1.0
+const SPEED = 0.5
+const JUMP_VELOCITY = 0.5
 const GRAVITY = 18.0
 
 var pitch := 0.0

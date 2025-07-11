@@ -1,7 +1,7 @@
 shader_type spatial;
 render_mode unshaded;
 
-const int CHUNK_SIZE = 64;
+const int CHUNK_SIZE = 128;
 const float VOXEL_SIZE = 1.0 / float(CHUNK_SIZE);
 const float MAX_DIST = 100.0;
 const int MAX_STEPS = 512;
