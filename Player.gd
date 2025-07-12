@@ -12,7 +12,6 @@ var sensitivity := 0.002
 
 func _ready() -> void:
 	RenderingServer.global_shader_parameter_set("aspect_ratio", float(get_viewport().size.x)/float(get_viewport().size.y))
-	print(get_viewport().size.x/get_viewport().size.y)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _unhandled_input(event: InputEvent) -> void:

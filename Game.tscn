@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://qppi8vfylqv4" path="res://ChunkHandler.gd" id="1_sb48q"]
 [ext_resource type="Shader" uid="uid://ba7y2dxofmqix" path="res://VoxelRaymarcher.gdshader" id="4_sb48q"]
-[ext_resource type="Texture2D" uid="uid://dwqvhmxfauspw" path="res://Atlas.png" id="5_r0x5m"]
+[ext_resource type="Texture2D" uid="uid://dwqvhmxfauspw" path="res://Atlas.png" id="4_t88pq"]
 [ext_resource type="Script" uid="uid://d1gig0anaqpgh" path="res://Player.gd" id="5_t88pq"]
 [ext_resource type="Script" uid="uid://bvux1lquxuc25" path="res://Performance.gd" id="6_r0x5m"]
 
@@ -31,7 +31,7 @@ _bundled = {
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_t88pq"]
 render_priority = 0
 shader = ExtResource("4_sb48q")
-shader_parameter/atlas = ExtResource("5_r0x5m")
+shader_parameter/atlas = ExtResource("4_t88pq")
 shader_parameter/atlas_columns = 6.0
 
 [sub_resource type="QuadMesh" id="QuadMesh_r0x5m"]
@@ -41,6 +41,7 @@ size = Vector2(3, 2)
 [node name="Game" type="Node3D"]
 script = ExtResource("1_sb48q")
 chunk_scene = SubResource("PackedScene_t88pq")
+render_distance = 1
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 

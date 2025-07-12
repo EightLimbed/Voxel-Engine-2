@@ -79,3 +79,7 @@ aspect_ratio={
 "type": "float",
 "value": 0.0
 }
+map_size={
+"type": "int",
+"value": 0
+}

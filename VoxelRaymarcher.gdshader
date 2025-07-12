@@ -1,10 +1,9 @@
 shader_type spatial;
 render_mode unshaded;
 
-const int CHUNK_SIZE = 128;
+const int CHUNK_SIZE = 64;
 const float VOXEL_SIZE = 1.0 / float(CHUNK_SIZE);
 const float MAX_DIST = 100.0;
-const int MAX_STEPS = 512;
 
 global uniform vec3 world_camera;     // Ray origin
 global uniform vec3 world_direction;  // Forward (normalized)
@@ -12,6 +11,7 @@ global uniform vec3 world_direction;  // Forward (normalized)
 uniform sampler2D atlas;
 uniform float atlas_columns;
 global uniform sampler2DArray chunks;
+global uniform int map_size;
 
 global uniform float aspect_ratio; // Pass this from GDScript as (viewport_width / viewport_height)
 
@@ -30,16 +30,16 @@ vec3 get_ray_direction(vec2 uv, vec3 forward) {
 }
 
 ivec3 to_voxel(vec3 p) {
-	vec3 t = (p + 0.5) * float(CHUNK_SIZE);
+	vec3 t = (p + 0.5) * float(map_size);
 	return ivec3(floor(t));
 }
 
-int get_voxel(ivec3 coord) {
-	if (any(lessThan(coord, ivec3(0))) || any(greaterThanEqual(coord, ivec3(CHUNK_SIZE))))
+int get_voxel(ivec3 pos) {
+	if (any(lessThan(pos, ivec3(0))) || any(greaterThanEqual(pos, ivec3(map_size))))
 		return 0;
 
-	vec2 uv = (vec2(coord.xy) + vec2(0.5)) / float(CHUNK_SIZE);
-	int index = coord.z;
+	vec2 uv = (vec2(pos.xy) + vec2(0.5)) / float(map_size);
+	int index = pos.z;
 	float value = texture(chunks, vec3(uv, float(index))).r;
 	return int(value * 255.0);
 }
@@ -58,6 +58,8 @@ voxel RayMarch(vec3 ro, vec3 rd) {
 
 	vec3 voxel_boundary = (vec3(voxel_p) + vec3(0.5) + step * 0.5) * VOXEL_SIZE - 0.5;
 	vec3 tMax = (voxel_boundary - ro) * inv_rd;
+	//could have done math so it fits the cube perfectly, but I wanted a buffer.
+	int MAX_STEPS = 2*map_size;
 
 	voxel v;
 	v.dist = 0.0;
@@ -107,7 +109,7 @@ void fragment() {
 	voxel v = RayMarch(ro, rd);
 	if (v.dist >= MAX_DIST) discard;
 
-	vec3 hit_voxel_pos = fract((ro + rd * v.dist + 0.5) * float(CHUNK_SIZE));
+	vec3 hit_voxel_pos = fract((ro + rd * v.dist + 0.5) * float(map_size));
 	float face_index = get_face(v.normal);
 
 	vec2 tex_uv;
